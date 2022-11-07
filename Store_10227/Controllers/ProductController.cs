@@ -49,28 +49,47 @@ namespace Store_10227.Controllers
         }
 
         // GET: Product/Details/5
-        public ActionResult Details(int id)
+        public async Task<ActionResult> Details(int id)
         {
-            return View();
-        }
+            Product oneproduct = null;
+            //Hosted web API REST Service base url
+            string Baseurl = "http://ec2-3-90-232-105.compute-1.amazonaws.com/";
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(Baseurl);
+                HttpResponseMessage Res = await client.GetAsync("api/Product/" + id);
+                //Checking the response is successful or not which is sent using HttpClient
+                if (Res.IsSuccessStatusCode)
+                {
+                    //Storing the response details recieved from web api
+                    var PrResponse = Res.Content.ReadAsStringAsync().Result;
+                    //Deserializing the response recieved from web api and storing into the Product list
+                    oneproduct = JsonConvert.DeserializeObject<Product>(PrResponse);
+                }
+                else
+                    ModelState.AddModelError(string.Empty, "Server Error. Please contact administrator.");
+            }
 
+            return View(oneproduct);
+        }
         // GET: Product/Create
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: Product/Create
+      // POST: Product/Create
         [HttpPost]
-        public ActionResult Create(Product prod)
+        public async Task<ActionResult> Create(Product prod)
         {
             try
             {
+                string Baseurl = "https://localhost:44358/";
                 // TODO: Add update logic here
-                string Baseurl = "http://ec2-3-90-232-105.compute-1.amazonaws.com/";
                 using (var client = new HttpClient())
                 {
                     client.BaseAddress = new Uri(Baseurl);
+
 
                     //HTTP POST
                     var postTask = client.PostAsJsonAsync<Product>("api/Product", prod);
@@ -81,7 +100,6 @@ namespace Store_10227.Controllers
                         return RedirectToAction("Index");
                     }
                 }
-
                 return RedirectToAction("Index");
             }
             catch
@@ -157,20 +175,52 @@ namespace Store_10227.Controllers
         }
 
         // GET: Product/Delete/5
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            return View();
+            Product oneproduct = null;
+            using (var client = new HttpClient())
+            {
+                string Baseurl = "http://ec2-3-90-232-105.compute-1.amazonaws.com/";
+                client.BaseAddress = new Uri(Baseurl);
+                HttpResponseMessage Res = await client.GetAsync("api/Product/" + id);
+                //Checking the response is successful or not which is sent using HttpClient
+                if (Res.IsSuccessStatusCode)
+                {
+                    //Storing the response details recieved from web api
+                    var PrResponse = Res.Content.ReadAsStringAsync().Result;
+                    //Deserializing the response recieved from web api and storing into the Product list
+                    oneproduct = JsonConvert.DeserializeObject<Product>(PrResponse);
+                }
+                else
+                    ModelState.AddModelError(string.Empty, "Server Error. Please contact administrator.");
+            }
+
+            return View(oneproduct);
         }
 
         // POST: Product/Delete/5
         [HttpPost]
-        public ActionResult Delete(int id, FormCollection collection)
+        public async Task<ActionResult> Delete(int id, FormCollection collection)
         {
             try
             {
                 // TODO: Add delete logic here
+                string Baseurl = "http://ec2-3-90-232-105.compute-1.amazonaws.com/";
+                using (var client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(Baseurl);
 
-                return RedirectToAction("Index");
+
+                    //HTTP POST
+                    // Deleting product with corresponding id
+                    HttpResponseMessage Res = await client.DeleteAsync("api/Product/" + id);
+                    if (Res.IsSuccessStatusCode)
+                    {
+                        return RedirectToAction("Index");
+                    }
+
+                    return RedirectToAction("Index");
+                }
             }
             catch
             {
